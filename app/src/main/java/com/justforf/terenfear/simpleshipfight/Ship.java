@@ -1,6 +1,8 @@
 package com.justforf.terenfear.simpleshipfight;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * Created by Terenfear on 11.09.2016.
@@ -12,6 +14,8 @@ public class Ship {
     public Ship(ArrayList<Tile> parts) {
         this.isAlive = true;
         this.parts = parts;
+        for (Tile part : parts)
+            part.setParentShip(this);
     }
 
     public ArrayList<Tile> getAllParts() {
@@ -21,8 +25,17 @@ public class Ship {
     public boolean addPart(Tile part) {
         if (parts.size() < 4) {
             parts.add(part);
+            part.setParentShip(this);
             return true;
         }else return false;
+    }
+
+    public void removePart(Tile part){
+        parts.remove(part);
+    }
+
+    public void removePart(int partId){
+        parts.remove(partId);
     }
 
     public Tile getPart(int id) {
@@ -47,5 +60,9 @@ public class Ship {
 
     public int getSize() {
         return parts.size();
+    }
+
+    public void sort(){
+        Collections.sort(parts);
     }
 }
