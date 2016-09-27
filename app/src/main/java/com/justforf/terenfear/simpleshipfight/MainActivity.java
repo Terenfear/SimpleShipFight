@@ -3,11 +3,16 @@ package com.justforf.terenfear.simpleshipfight;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
+import android.graphics.PorterDuff;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
@@ -31,12 +36,15 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvQuantityOf3;
     private TextView tvQuantityOf4;
     private ArrayList<TextView> quantityTextViews;
+    private Toolbar toolbar;
     private GestureDetector gestureDetector;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        toolbar = (android.support.v7.widget.Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
         tvQuantityOf1 = (TextView) findViewById(R.id.tvShip1);
         tvQuantityOf2 = (TextView) findViewById(R.id.tvShip2);
         tvQuantityOf3 = (TextView) findViewById(R.id.tvShip3);
@@ -64,11 +72,52 @@ public class MainActivity extends AppCompatActivity {
                 Bitmap bitmap = Bitmap.createBitmap(TILE_SIZE * DIMENSION, TILE_SIZE * DIMENSION, Bitmap.Config.ARGB_8888);
                 firstField.setImageBitmap(bitmap);
                 canvas = new Canvas(bitmap);
-                drawMap();
+                DrawUtils.drawField(canvas, firstField, tileMap);
                 gestureDetector = new GestureDetector(MainActivity.this, new PrepGestureListener());
                 firstField.setOnTouchListener(new PrepTouchListener());
             }
         });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.arrangement_menu, menu);
+        menu.findItem(R.id.doneArrangementItem).getIcon().setColorFilter(ContextCompat.getColor(this, R.color.colorWhite), PorterDuff.Mode.SRC_ATOP);
+        menu.findItem(R.id.clearArrangementItem).getIcon().setColorFilter(ContextCompat.getColor(this, R.color.colorWhite), PorterDuff.Mode.SRC_ATOP);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.doneArrangementItem:
+                String message = "";
+                boolean isQuantityRight = true;
+                for (int shipType = 0; shipType < 4; shipType++) {
+                    int currentNumber = shipQuantity[shipType];
+                    int desiredNumber = 4 - shipType;
+                    if (currentNumber != desiredNumber) {
+                        message += "Wrong number of " + (shipType + 1) + "-ships. You need " + desiredNumber + " of it (" + (desiredNumber - currentNumber) + " more).\n";
+                        isQuantityRight = false;
+                    }
+                }
+                if (!isQuantityRight) {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                    builder.setMessage(message).setPositiveButton("Ok", null);
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+                }
+                return true;
+            case R.id.clearArrangementItem:
+                for (Ship ship : ships)
+                    ship.removeAllParts();
+                ships.clear();
+                DrawUtils.drawField(canvas, firstField, tileMap);
+                updateShipQuantity();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     void updateShipQuantity() {
@@ -93,7 +142,7 @@ public class MainActivity extends AppCompatActivity {
         tvQuantityOf2.setText("x " + shipQuantity[1]);
         tvQuantityOf3.setText("x " + shipQuantity[2]);
         tvQuantityOf4.setText("x " + shipQuantity[3]);
-        for (int shipType = 0; shipType < 4; shipType++){
+        for (int shipType = 0; shipType < 4; shipType++) {
             int totalQuantity = shipQuantity[shipType];
             int desiredQuantity = 4 - shipType;
             TextView correspondingTV = quantityTextViews.get(shipType);
@@ -101,44 +150,11 @@ public class MainActivity extends AppCompatActivity {
                 correspondingTV.setTextColor(Color.RED);
             else {
                 if (totalQuantity < desiredQuantity)
-                    correspondingTV.setTextColor(0xffffaa00);
-                else correspondingTV.setTextColor(0xff00aa00);
+                    correspondingTV.setTextColor(ContextCompat.getColor(this, R.color.colorLightOrange));
+                else correspondingTV.setTextColor(Color.GREEN);
             }
 
         }
-    }
-
-    public void drawMap() {
-        Paint clearing = new Paint(Paint.ANTI_ALIAS_FLAG);
-        clearing.setColor(Color.WHITE);
-        Paint emptyPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        emptyPaint.setStyle(Paint.Style.STROKE);
-        emptyPaint.setColor(Color.BLACK);
-        Paint shipPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        shipPaint.setColor(Color.BLUE);
-        canvas.drawPaint(clearing);
-        for (Tile[] row : tileMap)
-            for (Tile tile : row) {
-                if (tile.isInShip())
-                    canvas.drawRect(tile, shipPaint);
-                else canvas.drawRect(tile, emptyPaint);
-            }
-        firstField.invalidate();
-    }
-
-    public void drawTile(Tile tile) {
-        Paint clearing = new Paint(Paint.ANTI_ALIAS_FLAG);
-        clearing.setColor(Color.WHITE);
-        Paint emptyPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        emptyPaint.setStyle(Paint.Style.STROKE);
-        emptyPaint.setColor(Color.BLACK);
-        Paint shipPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        shipPaint.setColor(Color.BLUE);
-        canvas.drawRect(tile, clearing);
-        if (tile.isInShip())
-            canvas.drawRect(tile, shipPaint);
-        else canvas.drawRect(tile, emptyPaint);
-        firstField.invalidate((int) tile.left, (int) tile.top, (int) tile.right, (int) tile.bottom);
     }
 
     public class PrepTouchListener implements View.OnTouchListener {
@@ -177,7 +193,7 @@ public class MainActivity extends AppCompatActivity {
                             }
                         }
                         updateShipQuantity();
-                        drawTile(part);
+                        DrawUtils.drawTile(canvas, firstField, part);
                         return;
                     }
                 }
@@ -258,8 +274,8 @@ public class MainActivity extends AppCompatActivity {
                                 return true;
                         }
                         updateShipQuantity();
-                        drawTile(tile);
-//                            drawMap();
+                        DrawUtils.drawTile(canvas, firstField, tile);
+//                            drawField();
                         return true;
                     }
                 }

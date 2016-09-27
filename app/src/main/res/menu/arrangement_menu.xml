@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/doneArrangementItem"
+        android:icon="@drawable/ic_check_black_24dp"
+        android:title="Done"
+        app:showAsAction="always"/>
+
+    <item
+        android:id="@+id/clearArrangementItem"
+        android:icon="@drawable/ic_clear_black_24dp"
+        android:title="Clear"
+        app:showAsAction="never"/>
+</menu>

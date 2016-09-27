@@ -38,6 +38,12 @@ public class Ship {
         parts.remove(partId);
     }
 
+    public void removeAllParts(){
+        for (Tile part : parts)
+            part.setParentShip(null);
+        parts.clear();
+    }
+
     public Tile getPart(int id) {
         return parts.get(id);
     }
