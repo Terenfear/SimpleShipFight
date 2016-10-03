@@ -7,15 +7,6 @@
                                              tools:context="com.justforf.terenfear.simpleshipfight.MainActivity">
 
     <android.support.constraint.Guideline
-        android:id="@+id/gdVer52"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.52"
-        tools:layout_editor_absoluteY="0dp"
-        tools:layout_editor_absoluteX="308dp"/>
-
-    <android.support.constraint.Guideline
         android:id="@+id/gdVer48"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -25,220 +16,39 @@
         tools:layout_editor_absoluteX="284dp"/>
 
     <android.support.constraint.Guideline
-        android:id="@+id/gdVer90"
+        android:id="@+id/gdVer52"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.39"
+        app:layout_constraintGuide_percent="0.52"
         tools:layout_editor_absoluteY="0dp"
-        tools:layout_editor_absoluteX="231dp"/>
+        tools:layout_editor_absoluteX="308dp"/>
 
-    <android.support.constraint.Guideline
-        android:id="@+id/gdVer50"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.23"
-        tools:layout_editor_absoluteY="0dp"
-        tools:layout_editor_absoluteX="136dp"/>
 
-    <android.support.constraint.Guideline
-        android:id="@+id/gdVer40"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.14"
-        tools:layout_editor_absoluteY="0dp"
-        tools:layout_editor_absoluteX="83dp"/>
-
-    <android.support.constraint.Guideline
-        android:id="@+id/gdHor10"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.1"
-        tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="36dp"/>
-
-    <android.support.constraint.Guideline
-        android:id="@+id/gdHor20"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.2"
-        tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="72dp"/>
-
-    <ImageView
-        android:id="@+id/ivShip1"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginBottom="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:adjustViewBounds="false"
-        app:layout_constraintBottom_toTopOf="@+id/gdHor10"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toLeftOf="@+id/gdVer40"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ship1"
-        tools:layout_constraintBottom_creator="1"
-        tools:layout_constraintLeft_creator="1"
-        tools:layout_constraintRight_creator="1"
-        tools:layout_constraintTop_creator="1"/>
-
-    <ImageView
-        android:id="@+id/ivShip2"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginBottom="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        app:layout_constraintBottom_toTopOf="@+id/gdHor20"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toLeftOf="@+id/gdVer40"
-        app:layout_constraintTop_toTopOf="@+id/gdHor10"
-        app:srcCompat="@drawable/ship2"
-        tools:layout_constraintBottom_creator="1"
-        tools:layout_constraintLeft_creator="1"
-        tools:layout_constraintRight_creator="1"
-        tools:layout_constraintTop_creator="1"/>
-
-    <ImageView
-        android:id="@+id/ivFirstField"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginBottom="16dp"
-        android:layout_marginStart="16dp"
+    <com.justforf.terenfear.simpleshipfight.FieldView
+        android:id="@+id/firstField"
+        app:layout_constraintRight_toLeftOf="@+id/gdVer48"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toLeftOf="@+id/gdVer48"
-        app:layout_constraintTop_toTopOf="@+id/gdHor20"
-        tools:layout_constraintBottom_creator="1"
-        tools:layout_constraintLeft_creator="1"
-        tools:layout_constraintRight_creator="1"
-        tools:layout_constraintTop_creator="1"/>
-
-    <ImageView
-        android:id="@+id/ivShip3"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginBottom="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        app:layout_constraintBottom_toTopOf="@+id/gdHor10"
-        app:layout_constraintLeft_toLeftOf="@+id/gdVer50"
-        app:layout_constraintRight_toLeftOf="@+id/gdVer90"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ship3"
-        tools:layout_constraintBottom_creator="1"
-        tools:layout_constraintLeft_creator="1"
-        tools:layout_constraintRight_creator="1"
-        tools:layout_constraintTop_creator="1"/>
-
-    <ImageView
-        android:id="@+id/ivShip4"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginBottom="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        app:layout_constraintBottom_toTopOf="@+id/gdHor20"
-        app:layout_constraintLeft_toLeftOf="@+id/gdVer50"
-        app:layout_constraintRight_toLeftOf="@+id/gdVer90"
-        app:layout_constraintTop_toTopOf="@+id/gdHor10"
-        app:srcCompat="@drawable/ship4"
-        tools:layout_constraintBottom_creator="1"
-        tools:layout_constraintLeft_creator="1"
+        tools:layout_constraintTop_creator="1"
         tools:layout_constraintRight_creator="1"
-        tools:layout_constraintTop_creator="1"/>
+        tools:layout_constraintBottom_creator="1"
+        tools:layout_constraintLeft_creator="1"/>
 
-    <TextView
-        android:id="@+id/tvShip1"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginBottom="8dp"
-        android:layout_marginTop="8dp"
-        android:ems="10"
-        android:text="x 0"
-        app:layout_constraintBottom_toTopOf="@+id/gdHor10"
-        app:layout_constraintLeft_toLeftOf="@+id/gdVer40"
-        app:layout_constraintRight_toLeftOf="@+id/gdVer50"
+    <com.justforf.terenfear.simpleshipfight.FieldView
+        android:id="@+id/secondField"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toRightOf="@id/gdVer52"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintVertical_bias="0.43"
-        android:gravity="center_vertical"
-        tools:layout_constraintTop_creator="1"
-        tools:layout_constraintRight_creator="1"
-        tools:layout_constraintBottom_creator="1"
-        tools:layout_constraintLeft_creator="1"/>
-
-    <TextView
-        android:id="@+id/tvShip2"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginBottom="8dp"
-        android:layout_marginTop="8dp"
-        android:ems="10"
-        android:text="x 0"
-        app:layout_constraintBottom_toTopOf="@+id/gdHor20"
-        app:layout_constraintLeft_toLeftOf="@+id/gdVer40"
-        app:layout_constraintRight_toLeftOf="@+id/gdVer50"
-        app:layout_constraintTop_toTopOf="@+id/gdHor10"
-        android:gravity="center_vertical"
         tools:layout_constraintTop_creator="1"
         tools:layout_constraintRight_creator="1"
         tools:layout_constraintBottom_creator="1"
         tools:layout_constraintLeft_creator="1"/>
-
-    <TextView
-        android:id="@+id/tvShip3"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginBottom="8dp"
-        android:layout_marginTop="8dp"
-        android:ems="10"
-        android:text="x 0"
-        app:layout_constraintBottom_toTopOf="@+id/gdHor10"
-        app:layout_constraintLeft_toLeftOf="@+id/gdVer90"
-        app:layout_constraintRight_toLeftOf="@+id/gdVer48"
-        app:layout_constraintTop_toTopOf="parent"
-        android:gravity="center_vertical"
-        tools:layout_constraintTop_creator="1"
-        tools:layout_constraintRight_creator="1"
-        tools:layout_constraintBottom_creator="1"
-        tools:layout_constraintLeft_creator="1"/>
-
-    <TextView
-        android:id="@+id/tvShip4"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginBottom="8dp"
-        android:layout_marginTop="8dp"
-        android:ems="10"
-        android:text="x 0"
-        app:layout_constraintBottom_toTopOf="@+id/gdHor20"
-        app:layout_constraintLeft_toLeftOf="@+id/gdVer90"
-        app:layout_constraintRight_toLeftOf="@+id/gdVer48"
-        app:layout_constraintTop_toTopOf="@+id/gdHor10"
-        android:gravity="center_vertical"
-        tools:layout_constraintTop_creator="1"
-        tools:layout_constraintRight_creator="1"
-        tools:layout_constraintBottom_creator="1"
-        tools:layout_constraintLeft_creator="1"/>
-
-    <TextView
-        android:id="@+id/line"
-        style="?android:attr/listSeparatorTextViewStyle"
-        android:gravity="center_horizontal"
-        android:layout_width="1dp"
-        android:layout_height="match_parent"
-        android:background="#000"
-        app:layout_constraintLeft_toLeftOf="@+id/gdVer48"
-        app:layout_constraintRight_toLeftOf="@+id/gdVer52"/>
 
 </android.support.constraint.ConstraintLayout>

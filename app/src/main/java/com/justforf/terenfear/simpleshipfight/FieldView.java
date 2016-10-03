@@ -5,8 +5,10 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.support.v4.content.ContextCompat;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
@@ -20,7 +22,7 @@ import java.util.ArrayList;
  * Created by Terenfear on 27.09.2016.
  */
 
-public class FieldView extends View {
+public class FieldView extends android.support.constraint.ConstraintLayout {
 
     private static final int DIMENSION = 10;
     private int xOffset = 0;
@@ -36,26 +38,45 @@ public class FieldView extends View {
     private GestureDetector gestureDetector;
     private Context parentContext;
 
+    public FieldView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        initView(context);
+    }
+
+    public FieldView(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+        initView(context);
+    }
+
     public FieldView(Context context) {
         super(context);
-        in
-        parentContext = context;
-        tvQuantityOf1 = (TextView) findViewById(R.id.tvShip1);
-        tvQuantityOf2 = (TextView) findViewById(R.id.tvShip2);
-        tvQuantityOf3 = (TextView) findViewById(R.id.tvShip3);
-        tvQuantityOf4 = (TextView) findViewById(R.id.tvShip4);
+        initView(context);
+    }
+
+    public FieldModel getFieldModel() {
+        return fieldModel;
+    }
+
+    @Override
+    protected void onFinishInflate() {
+        super.onFinishInflate();
+        tvQuantityOf1 = (TextView) this.findViewById(R.id.tvShip1);
+        tvQuantityOf2 = (TextView) this.findViewById(R.id.tvShip2);
+        tvQuantityOf3 = (TextView) this.findViewById(R.id.tvShip3);
+        tvQuantityOf4 = (TextView) this.findViewById(R.id.tvShip4);
         quantityTextViews = new ArrayList<>();
         quantityTextViews.add(tvQuantityOf1);
         quantityTextViews.add(tvQuantityOf2);
         quantityTextViews.add(tvQuantityOf3);
         quantityTextViews.add(tvQuantityOf4);
-        fieldImageView = (ImageView) findViewById(R.id.ivFirstField);
+        fieldImageView = (ImageView) this.findViewById(R.id.ivField);
         fieldImageView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
                 fieldImageView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                 int fieldHeight = fieldImageView.getHeight();
-                xOffset = (fieldImageView.getWidth() - fieldImageView.getHeight()) / 2;
+                int fieldWidth = fieldImageView.getWidth();
+                xOffset = (fieldWidth - fieldHeight) / 2;
                 tileSize = fieldHeight / DIMENSION;
                 fieldModel = new FieldModel(tileSize);
                 Bitmap bitmap = Bitmap.createBitmap(tileSize * DIMENSION, tileSize * DIMENSION, Bitmap.Config.ARGB_8888);
@@ -63,9 +84,26 @@ public class FieldView extends View {
                 canvas = new Canvas(bitmap);
                 DrawUtils.drawField(canvas, fieldImageView, fieldModel.getTileMap());
                 gestureDetector = new GestureDetector(parentContext, new FieldView.PrepGestureListener());
-                fieldImageView.setOnTouchListener(new FieldView.PrepTouchListener());
+                fieldImageView.setOnTouchListener(new gridOnTouchListener());
             }
         });
+
+    }
+
+    private void initView(Context context) {
+        parentContext = context;
+        LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        inflater.inflate(R.layout.field_layout, this);
+    }
+
+    public void removeListeners(){
+        fieldImageView.setOnTouchListener(null);
+    }
+
+    public void enableFightListeners(){
+//        fieldImageView.setOnTouchListener(null);
+        gestureDetector = new GestureDetector(parentContext, new FieldView.FightGestureListener());
+//        fieldImageView.setOnTouchListener(new gridOnTouchListener());
     }
 
     public void updateShipQuantity() {
@@ -90,7 +128,7 @@ public class FieldView extends View {
         }
     }
 
-    public void clearField(){
+    public void clearField() {
         for (Ship ship : fieldModel.getShips())
             ship.removeAllParts();
         fieldModel.clearShips();
@@ -98,7 +136,12 @@ public class FieldView extends View {
         updateShipQuantity();
     }
 
-    public class PrepTouchListener implements View.OnTouchListener {
+    public void generateRandomField(){
+        fieldModel.generateRandomField();
+        DrawUtils.drawField(canvas, fieldImageView, fieldModel.getTileMap());
+    }
+
+    private class gridOnTouchListener implements View.OnTouchListener {
 
         @Override
         public boolean onTouch(View view, MotionEvent motionEvent) {
@@ -107,7 +150,15 @@ public class FieldView extends View {
         }
     }
 
-    public class PrepGestureListener extends GestureDetector.SimpleOnGestureListener {
+    private class FightGestureListener extends GestureDetector.SimpleOnGestureListener{
+        @Override
+        public boolean onDoubleTap(MotionEvent e) {
+            Toast.makeText(parentContext, "SHOTS FIRED", Toast.LENGTH_SHORT).show();
+            return true;
+        }
+    }
+
+    private class PrepGestureListener extends GestureDetector.SimpleOnGestureListener {
 
         @Override
         public void onLongPress(MotionEvent e) {

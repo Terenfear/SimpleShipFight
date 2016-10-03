@@ -1,6 +1,7 @@
 package com.justforf.terenfear.simpleshipfight;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 /**
  * Created by Terenfear on 27.09.2016.
@@ -39,6 +40,41 @@ public class FieldModel {
         }
     }
 
+    public void generateRandomField() {
+        Random random = new Random();
+        for (int partId = 0; partId < 20; partId++) {
+            Tile tile;
+            boolean diagonalFree;
+            do {
+                diagonalFree = true;
+                int tileId = random.nextInt(100);
+                int rowId = tileId / 10;
+                int colId = tileId % 10;
+                tile = tileMap[rowId][colId];
+                if (tile.isInShip())
+                    continue;
+                for (int rowOffset = -1; rowOffset < 2; rowOffset += 2) {
+                    for (int colOffset = -1; colOffset < 2; colOffset += 2) {
+                        try {
+                            Tile neighbor = tileMap[rowId + rowOffset][colId + colOffset];
+                            if (neighbor.isInShip()) {
+                                diagonalFree = false;
+                                break;
+                            }
+                        } catch (IndexOutOfBoundsException exception) {
+                        }
+
+                    }
+                }
+            } while (!diagonalFree);
+            ArrayList parts = new ArrayList<Tile>();
+            parts.add(tile);
+            Ship ship = new Ship(parts);
+            ships.add(ship);
+            tile.setParentShip(ship);
+        }
+    }
+
     public void removeShip(Ship ship) {
         ships.remove(ship);
     }
@@ -47,7 +83,7 @@ public class FieldModel {
         ships.add(ship);
     }
 
-    public void clearShips(){
+    public void clearShips() {
         ships.clear();
     }
 
