@@ -25,7 +25,7 @@ import java.util.ArrayList;
 public class FieldView extends android.support.constraint.ConstraintLayout {
     private static final int DIMENSION = 10;
     private int xOffset = 0;
-    private int tileSize = 72;
+    private int tileSize;
     private FieldModel fieldModel;
     private Canvas canvas;
     private ImageView fieldImageView;
@@ -81,7 +81,7 @@ public class FieldView extends android.support.constraint.ConstraintLayout {
                 Bitmap bitmap = Bitmap.createBitmap(fieldHeight, fieldHeight, Bitmap.Config.ARGB_8888);
                 fieldImageView.setImageBitmap(bitmap);
                 canvas = new Canvas(bitmap);
-                DrawUtils.drawField(canvas, fieldImageView, fieldModel.getTileMap());
+                DrawUtils.drawVisibleField(canvas, fieldImageView, fieldModel.getTileMap());
                 gestureDetector = new GestureDetector(parentContext, new FieldView.PrepGestureListener());
                 fieldImageView.setOnTouchListener(new gridOnTouchListener());
             }
@@ -129,7 +129,7 @@ public class FieldView extends android.support.constraint.ConstraintLayout {
 
     public void clearField() {
         fieldModel.clear();
-        DrawUtils.drawField(canvas, fieldImageView, fieldModel.getTileMap());
+        DrawUtils.drawVisibleField(canvas, fieldImageView, fieldModel.getTileMap());
         updateShipQuantity();
     }
 
@@ -137,8 +137,8 @@ public class FieldView extends android.support.constraint.ConstraintLayout {
         boolean isGenerated;
         do {
             isGenerated = fieldModel.generateRandomField();
-        }while (!isGenerated);
-        DrawUtils.drawField(canvas, fieldImageView, fieldModel.getTileMap());
+        } while (!isGenerated);
+        DrawUtils.drawInvisibleField(canvas, fieldImageView, fieldModel.getTileMap());
     }
 
     private class gridOnTouchListener implements View.OnTouchListener {
@@ -153,8 +153,43 @@ public class FieldView extends android.support.constraint.ConstraintLayout {
     private class FightGestureListener extends GestureDetector.SimpleOnGestureListener {
         @Override
         public boolean onDoubleTap(MotionEvent e) {
-            Toast.makeText(parentContext, "SHOTS FIRED", Toast.LENGTH_SHORT).show();
+            int x = (int) ((e.getX() - xOffset) / tileSize);
+            int y = (int) (e.getY() / tileSize);
+            for (int rowId = 0; rowId < DIMENSION; rowId++) {
+                for (int colId = 0; colId < DIMENSION; colId++) {
+                    Tile tile = fieldModel.getTileMap()[rowId][colId];
+                    if (x == tile.getX() && y == tile.getY()) {
+                        if (tile.isShot()) {
+                            Toast.makeText(parentContext, " You've already shot there", Toast.LENGTH_SHORT).show();
+                            return false;
+                        } else {
+                            tile.setShot(true);
+                            if (tile.isInShip())
+                                if (!tile.getParentShip().checkIntegrity()) {
+                                    for (Tile part : tile.getParentShip().getAllParts())
+                                        shotTilesAround(part.getY(), part.getX());
+                                    DrawUtils.drawInvisibleField(canvas, fieldImageView, fieldModel.getTileMap());
+                                    updateShipQuantity();
+                                }
+                            DrawUtils.drawTile(canvas, fieldImageView, tile);
+                            Toast.makeText(parentContext, "SHOTS FIRED", Toast.LENGTH_SHORT).show();
+                            return true;
+                        }
+                    }
+                }
+            }
             return true;
+        }
+
+        private void shotTilesAround(int rowId, int colId) {
+            for (int rowOffset = -1; rowOffset < 2; rowOffset++) {
+                for (int colOffset = -1; colOffset < 2; colOffset++) {
+                    try {
+                        fieldModel.getTileMap()[rowId + rowOffset][colId + colOffset].setShot(true);
+                    } catch (IndexOutOfBoundsException e) {
+                    }
+                }
+            }
         }
     }
 
@@ -163,11 +198,11 @@ public class FieldView extends android.support.constraint.ConstraintLayout {
         @Override
         public void onLongPress(MotionEvent e) {
             Log.i("onTouch", "long tap");
-            float x = e.getX() - xOffset;
-            float y = e.getY();
+            int x = (int) ((e.getX() - xOffset) / tileSize);
+            int y = (int) (e.getY() / tileSize);
             for (Ship ship : fieldModel.getShips()) {
                 for (Tile part : ship.getAllParts()) {
-                    if (x > part.left && x < part.right && y > part.top && y < part.bottom) {
+                    if (x == part.getX() && y == part.getY()) {
                         int partId = ship.getAllParts().indexOf(part);
                         ship.removePart(part);
                         part.setParentShip(null);
@@ -201,13 +236,13 @@ public class FieldView extends android.support.constraint.ConstraintLayout {
         @Override
         public boolean onSingleTapUp(MotionEvent e) {
             Log.i("onTouch", "single tap");
-            float x = e.getX() - xOffset;
-            float y = e.getY();
+            int x = (int) ((e.getX() - xOffset) / tileSize);
+            int y = (int) (e.getY() / tileSize);
             for (int rowId = 0; rowId < DIMENSION; rowId++) {
                 Tile[] row = fieldModel.getTileMap()[rowId];
                 for (int colId = 0; colId < row.length; colId++) {
                     Tile tile = row[colId];
-                    if (!tile.isInShip() && x > tile.left && x < tile.right && y > tile.top && y < tile.bottom) {
+                    if (!tile.isInShip() && x == tile.getX() && y == tile.getY()) {
                         //checking selected tile
                         ArrayList<Tile> neighborTiles = new ArrayList<>();
                         for (int rowOffset = -1; rowOffset < 2; rowOffset++) {
@@ -267,7 +302,7 @@ public class FieldView extends android.support.constraint.ConstraintLayout {
                         }
                         updateShipQuantity();
                         DrawUtils.drawTile(canvas, fieldImageView, tile);
-//                            drawField();
+//                            drawVisibleField();
                         return true;
                     }
                 }

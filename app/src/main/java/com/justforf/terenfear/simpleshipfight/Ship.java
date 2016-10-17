@@ -1,7 +1,6 @@
 package com.justforf.terenfear.simpleshipfight;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 
 /**
@@ -27,18 +26,18 @@ public class Ship {
             parts.add(part);
             part.setParentShip(this);
             return true;
-        }else return false;
+        } else return false;
     }
 
-    public void removePart(Tile part){
+    public void removePart(Tile part) {
         parts.remove(part);
     }
 
-    public void removePart(int partId){
+    public void removePart(int partId) {
         parts.remove(partId);
     }
 
-    public void removeAllParts(){
+    public void removeAllParts() {
         for (Tile part : parts)
             part.setParentShip(null);
         parts.clear();
@@ -56,6 +55,18 @@ public class Ship {
         return parts.get(parts.size() - 1);
     }
 
+    public boolean checkIntegrity() {
+        int numberOfDamaged = 0;
+        for (Tile part : parts) {
+            if (part.isShot())
+                numberOfDamaged++;
+        }
+        if (numberOfDamaged == parts.size())
+            isAlive = false;
+        else isAlive = true;
+        return isAlive;
+    }
+
     public boolean isAlive() {
         return isAlive;
     }
@@ -68,7 +79,7 @@ public class Ship {
         return parts.size();
     }
 
-    public void sort(){
+    public void sort() {
         Collections.sort(parts);
     }
 }

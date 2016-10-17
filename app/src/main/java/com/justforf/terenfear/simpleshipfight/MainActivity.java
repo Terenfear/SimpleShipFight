@@ -64,7 +64,10 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             case R.id.clearArrangementItem:
                 firstField.clearField();
-                firstField.generateRandomField();
+                secondField.setVisibility(View.VISIBLE);
+                secondField.enableFightListeners();
+                secondField.generateRandomField();
+                secondField.updateShipQuantity();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

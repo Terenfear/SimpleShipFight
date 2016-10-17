@@ -24,22 +24,10 @@ public class FieldModel {
     }
 
     public void updateShipNumbers() {
-        shipQuantity[0] = shipQuantity[1] = shipQuantity[2] = shipQuantity[3] = 0;
+        shipQuantity = new int[]{0, 0, 0, 0};
         for (Ship ship : ships) {
-            switch (ship.getSize()) {
-                case 1:
-                    shipQuantity[0]++;
-                    break;
-                case 2:
-                    shipQuantity[1]++;
-                    break;
-                case 3:
-                    shipQuantity[2]++;
-                    break;
-                case 4:
-                    shipQuantity[3]++;
-                    break;
-            }
+            if (ship.isAlive())
+                shipQuantity[ship.getSize() - 1]++;
         }
     }
 
