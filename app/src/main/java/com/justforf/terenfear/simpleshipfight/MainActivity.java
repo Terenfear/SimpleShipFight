@@ -30,7 +30,6 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.arrangement_menu, menu);
         menu.findItem(R.id.doneArrangementItem).getIcon().setColorFilter(ContextCompat.getColor(this, R.color.colorWhite), PorterDuff.Mode.SRC_ATOP);
-        menu.findItem(R.id.clearArrangementItem).getIcon().setColorFilter(ContextCompat.getColor(this, R.color.colorWhite), PorterDuff.Mode.SRC_ATOP);
         return true;
     }
 
@@ -60,10 +59,12 @@ public class MainActivity extends AppCompatActivity {
                     secondField.setVisibility(View.VISIBLE);
                     secondField.enableFightListeners();
                     secondField.generateRandomField();
+                    secondField.updateShipQuantity();
                 }
                 return true;
             case R.id.clearArrangementItem:
                 firstField.clearField();
+                firstField.generateRandomField();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

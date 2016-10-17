@@ -23,7 +23,6 @@ import java.util.ArrayList;
  */
 
 public class FieldView extends android.support.constraint.ConstraintLayout {
-
     private static final int DIMENSION = 10;
     private int xOffset = 0;
     private int tileSize = 72;
@@ -78,8 +77,8 @@ public class FieldView extends android.support.constraint.ConstraintLayout {
                 int fieldWidth = fieldImageView.getWidth();
                 xOffset = (fieldWidth - fieldHeight) / 2;
                 tileSize = fieldHeight / DIMENSION;
-                fieldModel = new FieldModel(tileSize);
-                Bitmap bitmap = Bitmap.createBitmap(tileSize * DIMENSION, tileSize * DIMENSION, Bitmap.Config.ARGB_8888);
+                fieldModel = new FieldModel(tileSize, DIMENSION);
+                Bitmap bitmap = Bitmap.createBitmap(fieldHeight, fieldHeight, Bitmap.Config.ARGB_8888);
                 fieldImageView.setImageBitmap(bitmap);
                 canvas = new Canvas(bitmap);
                 DrawUtils.drawField(canvas, fieldImageView, fieldModel.getTileMap());
@@ -96,11 +95,11 @@ public class FieldView extends android.support.constraint.ConstraintLayout {
         inflater.inflate(R.layout.field_layout, this);
     }
 
-    public void removeListeners(){
+    public void removeListeners() {
         fieldImageView.setOnTouchListener(null);
     }
 
-    public void enableFightListeners(){
+    public void enableFightListeners() {
 //        fieldImageView.setOnTouchListener(null);
         gestureDetector = new GestureDetector(parentContext, new FieldView.FightGestureListener());
 //        fieldImageView.setOnTouchListener(new gridOnTouchListener());
@@ -129,15 +128,16 @@ public class FieldView extends android.support.constraint.ConstraintLayout {
     }
 
     public void clearField() {
-        for (Ship ship : fieldModel.getShips())
-            ship.removeAllParts();
-        fieldModel.clearShips();
+        fieldModel.clear();
         DrawUtils.drawField(canvas, fieldImageView, fieldModel.getTileMap());
         updateShipQuantity();
     }
 
-    public void generateRandomField(){
-        fieldModel.generateRandomField();
+    public void generateRandomField() {
+        boolean isGenerated;
+        do {
+            isGenerated = fieldModel.generateRandomField();
+        }while (!isGenerated);
         DrawUtils.drawField(canvas, fieldImageView, fieldModel.getTileMap());
     }
 
@@ -150,7 +150,7 @@ public class FieldView extends android.support.constraint.ConstraintLayout {
         }
     }
 
-    private class FightGestureListener extends GestureDetector.SimpleOnGestureListener{
+    private class FightGestureListener extends GestureDetector.SimpleOnGestureListener {
         @Override
         public boolean onDoubleTap(MotionEvent e) {
             Toast.makeText(parentContext, "SHOTS FIRED", Toast.LENGTH_SHORT).show();

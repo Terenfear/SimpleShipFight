@@ -19,12 +19,16 @@ public final class DrawUtils {
         emptyPaint.setColor(Color.BLACK);
         Paint shipPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         shipPaint.setColor(Color.BLUE);
+        Paint closePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        closePaint.setColor(Color.RED);
         canvas.drawPaint(clearing);
         for (Tile[] row : tileMap)
             for (Tile tile : row) {
+                if (!tile.isFarFromShips())
+                    canvas.drawRect(tile, closePaint);
                 if (tile.isInShip())
                     canvas.drawRect(tile, shipPaint);
-                else canvas.drawRect(tile, emptyPaint);
+                if (!tile.isInShip() && tile.isFarFromShips()) canvas.drawRect(tile, emptyPaint);
             }
         field.invalidate();
     }

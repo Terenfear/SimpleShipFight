@@ -7,16 +7,30 @@ import android.graphics.RectF;
  */
 public class Tile extends RectF implements Comparable {
     public static final Creator<RectF> CREATOR = null;
+    private int x;
+    private int y;
     private Ship parentShip;
     private boolean isShot;
+    private boolean isFarFromShips;
 
-    public Tile(float x, float y, float side) {
+    public Tile(int x, int y, float side) {
         this.parentShip = null;
         this.isShot = false;
-        left = x;
-        right = x + side;
-        top = y;
-        bottom = y + side;
+        this.isFarFromShips = true;
+        this.x = x;
+        this.y = y;
+        left = x * side;
+        right = left + side;
+        top = y * side;
+        bottom = top + side;
+    }
+
+    public boolean isFarFromShips() {
+        return isFarFromShips;
+    }
+
+    public void setFarFromShips(boolean farFromShips) {
+        isFarFromShips = farFromShips;
     }
 
     public boolean isInShip() {
@@ -31,6 +45,14 @@ public class Tile extends RectF implements Comparable {
         this.parentShip = ship;
     }
 
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
     public boolean isShot() {
         return isShot;
     }
@@ -41,11 +63,11 @@ public class Tile extends RectF implements Comparable {
 
     @Override
     public int compareTo(Object otherTile) {
-        int otherTop = (int) ((Tile) otherTile).top;
-        int otherLeft = (int) ((Tile) otherTile).left;
-        if ((int)this.top != otherTop)
-            return (int)this.top - otherTop;
+        int otherX = ((Tile) otherTile).getX();
+        int otherY = ((Tile) otherTile).getY();
+        if (this.x != otherX)
+            return this.x - otherX;
         else
-            return (int)this.left - otherLeft;
+            return this.y - otherY;
     }
 }
