@@ -12,15 +12,15 @@ import android.view.View;
 
 public class MainActivity extends AppCompatActivity {
     private Toolbar toolbar;
-    private FieldView firstField;
-    private FieldView secondField;
+    private FieldController firstField;
+    private FieldController secondField;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        firstField = (FieldView) this.findViewById(R.id.firstField);
-        secondField = (FieldView) this.findViewById(R.id.secondField);
+        firstField = (FieldController) this.findViewById(R.id.firstField);
+        secondField = (FieldController) this.findViewById(R.id.secondField);
         secondField.setVisibility(View.INVISIBLE);
         toolbar = (android.support.v7.widget.Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -58,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
                     firstField.removeListeners();
                     secondField.setVisibility(View.VISIBLE);
                     secondField.enableFightListeners();
-                    secondField.generateRandomField();
+                    secondField.generateEnemyField();
                     secondField.updateShipQuantity();
                 }
                 return true;
@@ -66,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
                 firstField.clearField();
                 secondField.setVisibility(View.VISIBLE);
                 secondField.enableFightListeners();
-                secondField.generateRandomField();
+                secondField.generateEnemyField();
                 secondField.updateShipQuantity();
                 return true;
             default:
