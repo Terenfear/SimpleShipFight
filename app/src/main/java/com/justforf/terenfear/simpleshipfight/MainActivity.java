@@ -38,12 +38,10 @@ public class MainActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.doneArrangementItem:
                 String message = "";
-                int[] shipQuantity = firstField.getFieldModel().getShipQuantity();
+                boolean[] enoughShips = firstField.checkShipQuantityStatus();
                 boolean isQuantityRight = true;
                 for (int shipType = 0; shipType < 4; shipType++) {
-                    int currentNumber = shipQuantity[shipType];
-                    int desiredNumber = 4 - shipType;
-                    if (currentNumber != desiredNumber) {
+                    if (!enoughShips[shipType]) {
                         message += "Wrong number of " + (shipType + 1) + "-ships.\n";
                         isQuantityRight = false;
                     }
