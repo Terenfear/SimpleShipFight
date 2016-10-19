@@ -31,15 +31,12 @@ public class FieldController extends android.support.constraint.ConstraintLayout
     private FieldModel fieldModel;
     private Canvas canvas;
     private ImageView fieldImageView;
-    private TextView tvQuantityOf1;
-    private TextView tvQuantityOf2;
-    private TextView tvQuantityOf3;
-    private TextView tvQuantityOf4;
     private ArrayList<TextView> quantityTextViews;
     private GestureDetector gestureDetector;
     private Context parentContext;
     private Drawman drawman;
     private FieldGenerator fieldGenerator;
+    private TurnEndListener turnEndListener;
 
     public FieldController(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -56,6 +53,14 @@ public class FieldController extends android.support.constraint.ConstraintLayout
         initView(context);
     }
 
+    public Drawman getDrawman() {
+        return drawman;
+    }
+
+    public void setTurnEndListener(TurnEndListener listener) {
+        turnEndListener = listener;
+    }
+
     private void initView(Context context) {
         parentContext = context;
         drawman = new Drawman();
@@ -67,10 +72,10 @@ public class FieldController extends android.support.constraint.ConstraintLayout
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
-        tvQuantityOf1 = (TextView) this.findViewById(R.id.tvShip1);
-        tvQuantityOf2 = (TextView) this.findViewById(R.id.tvShip2);
-        tvQuantityOf3 = (TextView) this.findViewById(R.id.tvShip3);
-        tvQuantityOf4 = (TextView) this.findViewById(R.id.tvShip4);
+        TextView tvQuantityOf1 = (TextView) this.findViewById(R.id.tvShip1);
+        TextView tvQuantityOf2 = (TextView) this.findViewById(R.id.tvShip2);
+        TextView tvQuantityOf3 = (TextView) this.findViewById(R.id.tvShip3);
+        TextView tvQuantityOf4 = (TextView) this.findViewById(R.id.tvShip4);
         quantityTextViews = new ArrayList<>();
         quantityTextViews.add(tvQuantityOf1);
         quantityTextViews.add(tvQuantityOf2);
@@ -101,11 +106,12 @@ public class FieldController extends android.support.constraint.ConstraintLayout
         fieldImageView.setOnTouchListener(null);
     }
 
-    public void enableFightListeners() {
-        gestureDetector = new GestureDetector(parentContext, new FieldController.FightGestureListener());
+    public void enableShotListeners() {
+        fieldImageView.setOnTouchListener(new fieldOnTouchListener());
+        gestureDetector = new GestureDetector(parentContext, new ShotGestureListener());
     }
 
-    public boolean[] checkShipQuantityStatus(){
+    public boolean[] checkShipQuantityStatus() {
         int[] shipQuantity = {0, 0, 0, 0};
         for (Ship ship : fieldModel.getShips()) {
             if (ship.isAlive())
@@ -135,7 +141,7 @@ public class FieldController extends android.support.constraint.ConstraintLayout
         }
     }
 
-    public Tile getTile(int rowId, int colId) {
+    public Tile getTile(int rowId, int colId) throws IndexOutOfBoundsException {
         return fieldModel.getTileMap()[rowId][colId];
     }
 
@@ -152,6 +158,59 @@ public class FieldController extends android.support.constraint.ConstraintLayout
         } while (!isGenerated);
         drawman.drawInvisibleField();
     }
+
+    public void shotTilesAround(int rowId, int colId) {
+        for (int rowOffset = -1; rowOffset < 2; rowOffset++) {
+            for (int colOffset = -1; colOffset < 2; colOffset++) {
+                try {
+                    fieldModel.getTileMap()[rowId + rowOffset][colId + colOffset].setShot(true);
+                } catch (IndexOutOfBoundsException e) {
+                }
+            }
+        }
+    }
+
+    public boolean areAllNearbyShot(Tile tile) {
+        int tileX = tile.getX();
+        int tileY = tile.getY();
+        try {
+            if (!getTile(tileY - 1, tileX).isShot()) return false;
+        } catch (IndexOutOfBoundsException ignored) {
+        }
+        try {
+            if (!getTile(tileY, tileX + 1).isShot()) return false;
+        } catch (IndexOutOfBoundsException ignored) {
+        }
+        try {
+            if (!getTile(tileY + 1, tileX).isShot()) return false;
+        } catch (IndexOutOfBoundsException ignored) {
+        }
+        try {
+            if (!getTile(tileY, tileX - 1).isShot()) return false;
+        } catch (IndexOutOfBoundsException ignored) {
+        }
+        return true;
+    }
+
+    public boolean isEndgame(String message, String buttonText) {
+        boolean isEndgame = true;
+        for (int shipSize = 0; shipSize < 4; shipSize++) {
+            if (fieldModel.getShipQuantity()[shipSize] > 0) {
+                isEndgame = false;
+                break;
+            }
+        }
+        if (isEndgame) {
+            fieldImageView.setOnTouchListener(null);
+            drawman.drawVisibleField();
+            AlertDialog.Builder builder = new AlertDialog.Builder(parentContext);
+            builder.setMessage(message).setPositiveButton(buttonText, null);
+            AlertDialog dialog = builder.create();
+            dialog.show();
+        }
+        return isEndgame;
+    }
+
 
     private final class FieldGenerator {
         private final int VERTICAL = 0;
@@ -265,7 +324,7 @@ public class FieldController extends android.support.constraint.ConstraintLayout
         }
     }
 
-    private final class Drawman {
+    public final class Drawman {
         private Paint clearing;
         private Paint emptyPaint;
         private Paint shipPaint;
@@ -338,7 +397,7 @@ public class FieldController extends android.support.constraint.ConstraintLayout
         }
     }
 
-    private class FightGestureListener extends GestureDetector.SimpleOnGestureListener {
+    private class ShotGestureListener extends GestureDetector.SimpleOnGestureListener {
         @Override
         public boolean onDoubleTap(MotionEvent e) {
             int x = (int) ((e.getX() - xOffset) / tileSize);
@@ -352,21 +411,17 @@ public class FieldController extends android.support.constraint.ConstraintLayout
                             return false;
                         } else {
                             tile.setShot(true);
-                            if (tile.isInShip())
+                            if (tile.isInShip()) {
                                 if (!tile.getParentShip().checkIntegrity()) {
                                     for (Tile part : tile.getParentShip().getAllParts())
                                         shotTilesAround(part.getY(), part.getX());
                                     drawman.drawInvisibleField();
                                     updateShipQuantity();
-                                    boolean[] shipsAlive = checkShipQuantityStatus();
-                                    if (!shipsAlive[0] && !shipsAlive[1] && !shipsAlive[2] && !shipsAlive[3]){
-                                        fieldImageView.setOnTouchListener(null);
-                                        AlertDialog.Builder builder = new AlertDialog.Builder(parentContext);
-                                        builder.setMessage("You have won!").setPositiveButton("Great!", null);
-                                        AlertDialog dialog = builder.create();
-                                        dialog.show();
-                                    }
+                                    if (isEndgame("You have won, congratulations!", "Great!"))
+                                        return true;
                                 }
+                            } else
+                                turnEndListener.turnEnded(LastPlayer.HUMAN);
                             drawman.drawTile(tile);
                             return true;
                         }
@@ -374,17 +429,6 @@ public class FieldController extends android.support.constraint.ConstraintLayout
                 }
             }
             return true;
-        }
-
-        private void shotTilesAround(int rowId, int colId) {
-            for (int rowOffset = -1; rowOffset < 2; rowOffset++) {
-                for (int colOffset = -1; colOffset < 2; colOffset++) {
-                    try {
-                        fieldModel.getTileMap()[rowId + rowOffset][colId + colOffset].setShot(true);
-                    } catch (IndexOutOfBoundsException e) {
-                    }
-                }
-            }
         }
     }
 

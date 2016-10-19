@@ -10,18 +10,19 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements TurnEndListener{
     private Toolbar toolbar;
-    private FieldController firstField;
-    private FieldController secondField;
+    private FieldController playerField;
+    private FieldController enemyField;
+    private Bot enemy;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        firstField = (FieldController) this.findViewById(R.id.firstField);
-        secondField = (FieldController) this.findViewById(R.id.secondField);
-        secondField.setVisibility(View.INVISIBLE);
+        playerField = (FieldController) this.findViewById(R.id.firstField);
+        enemyField = (FieldController) this.findViewById(R.id.secondField);
+        enemyField.setVisibility(View.INVISIBLE);
         toolbar = (android.support.v7.widget.Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
     }
@@ -38,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.doneArrangementItem:
                 String message = "";
-                boolean[] enoughShips = firstField.checkShipQuantityStatus();
+                boolean[] enoughShips = playerField.checkShipQuantityStatus();
                 boolean isQuantityRight = true;
                 for (int shipType = 0; shipType < 4; shipType++) {
                     if (!enoughShips[shipType]) {
@@ -53,22 +54,34 @@ public class MainActivity extends AppCompatActivity {
                     dialog.show();
                 }
                 else {
-                    firstField.removeListeners();
-                    secondField.setVisibility(View.VISIBLE);
-                    secondField.enableFightListeners();
-                    secondField.generateEnemyField();
-                    secondField.updateShipQuantity();
+                    playerField.removeListeners();
+                    enemy = new Bot(playerField, this, 4);
+                    enemyField.setVisibility(View.VISIBLE);
+                    enemyField.generateEnemyField();
+                    enemyField.updateShipQuantity();
+                    enemyField.setTurnEndListener(this);
+                    enemyField.enableShotListeners();
+                    toolbar.getMenu().clear();
                 }
                 return true;
             case R.id.clearArrangementItem:
-                firstField.clearField();
-                secondField.setVisibility(View.VISIBLE);
-                secondField.enableFightListeners();
-                secondField.generateEnemyField();
-                secondField.updateShipQuantity();
+                playerField.clearField();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
+    public void turnEnded(LastPlayer lastPlayer) {
+        switch (lastPlayer){
+            case HUMAN:
+                enemyField.removeListeners();
+                enemy.makeShot(null);
+                break;
+            case BOT:
+                enemyField.enableShotListeners();
+                break;
         }
     }
 }
