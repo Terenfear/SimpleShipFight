@@ -2,11 +2,12 @@ package com.justforf.terenfear.simpleshipfight;
 
 import android.os.Handler;
 import android.support.annotation.Nullable;
+import android.view.View;
 
 import java.util.ArrayList;
 import java.util.Random;
 
-import static com.justforf.terenfear.simpleshipfight.FieldController.DIMENSION;
+import static com.justforf.terenfear.simpleshipfight.FieldView.DIMENSION;
 
 /**
  * Created by Terenfear on 18.10.2016.
@@ -15,23 +16,28 @@ import static com.justforf.terenfear.simpleshipfight.FieldController.DIMENSION;
 public class Bot {
     private final int autoAimTurn;
     private FieldController enemyField;
+    private FieldController ourField;
     private TurnEndListener turnEndListener;
     private int turnCounter = 0;
     private ArrayList<Tile> burningTiles = new ArrayList<>();
-    //private Tile lastHit = null;
     private Random random = new Random();
 
-    public Bot(FieldController enemyField, TurnEndListener listener, int autoAimTurn) {
+    public Bot(FieldController enemyField, FieldController ourField, TurnEndListener listener, int autoAimTurn) {
         this.enemyField = enemyField;
+        this.ourField = ourField;
         this.turnEndListener = listener;
         this.autoAimTurn = autoAimTurn;
+        this.ourField.setVisibility(View.VISIBLE);
+        this.ourField.generateField(false);
+        this.ourField.updateShipQuantity();
+        this.ourField.setTurnEndListener(listener);
+        this.ourField.enableShotListeners();
     }
 
     public void makeShot(@Nullable final Tile targetTile) {
         Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             private Tile target = targetTile;
-
             @Override
             public void run() {
                 if (target == null) {
@@ -58,7 +64,7 @@ public class Bot {
                             burningTiles.remove(part);
                         }
                         nextTarget = null;
-                        enemyField.getDrawman().drawVisibleField();
+                        enemyField.drawVisibleField();
                         enemyField.updateShipQuantity();
                         if (enemyField.isEndgame("You have lost, better luck next time.", "Ok"))
                             return;
@@ -69,7 +75,7 @@ public class Bot {
                 } else {
                     turnEndListener.turnEnded(LastPlayer.BOT);
                 }
-                enemyField.getDrawman().drawTile(target);
+                enemyField.drawTile(target);
             }
         }, 1500);
     }
@@ -82,7 +88,7 @@ public class Bot {
             int tileId = random.nextInt(DIMENSION * DIMENSION);
             int rowId = tileId / DIMENSION;
             int colId = tileId % DIMENSION;
-            target = enemyField.getTile(rowId, colId);
+            target = enemyField.getTile(colId, rowId);
             canShootHere = (autoAimOn ? !target.isShot() && target.isInShip() : !target.isShot());
         } while (!canShootHere);
         turnCounter = (autoAimOn ? 0 : turnCounter + 1);
@@ -117,7 +123,7 @@ public class Bot {
                     break;
             }
             try {
-                nextTarget = enemyField.getTile(lastY + offsetY, lastX + offsetX);
+                nextTarget = enemyField.getTile(lastX + offsetX, lastY + offsetY);
                 foundNextTarget = !nextTarget.isShot();
             } catch (IndexOutOfBoundsException e) {
             }

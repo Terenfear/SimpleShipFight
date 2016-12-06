@@ -10,7 +10,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
-public class MainActivity extends AppCompatActivity implements TurnEndListener{
+public class MainActivity extends AppCompatActivity implements TurnEndListener {
     private Toolbar toolbar;
     private FieldController playerField;
     private FieldController enemyField;
@@ -20,8 +20,8 @@ public class MainActivity extends AppCompatActivity implements TurnEndListener{
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        playerField = (FieldController) this.findViewById(R.id.firstField);
-        enemyField = (FieldController) this.findViewById(R.id.secondField);
+        playerField = new FieldController(this, (FieldView) this.findViewById(R.id.firstField));
+        enemyField = new FieldController(this, (FieldView) this.findViewById(R.id.secondField));
         enemyField.setVisibility(View.INVISIBLE);
         toolbar = (android.support.v7.widget.Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -52,20 +52,15 @@ public class MainActivity extends AppCompatActivity implements TurnEndListener{
                     builder.setMessage(message).setPositiveButton("Ok", null);
                     AlertDialog dialog = builder.create();
                     dialog.show();
-                }
-                else {
+                } else {
                     playerField.removeListeners();
-                    enemy = new Bot(playerField, this, 4);
-                    enemyField.setVisibility(View.VISIBLE);
-                    enemyField.generateEnemyField();
-                    enemyField.updateShipQuantity();
-                    enemyField.setTurnEndListener(this);
-                    enemyField.enableShotListeners();
+                    enemy = new Bot(playerField, enemyField, this, 4);
                     toolbar.getMenu().clear();
                 }
                 return true;
             case R.id.clearArrangementItem:
                 playerField.clearField();
+//                playerField.generateField(true);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -74,7 +69,7 @@ public class MainActivity extends AppCompatActivity implements TurnEndListener{
 
     @Override
     public void turnEnded(LastPlayer lastPlayer) {
-        switch (lastPlayer){
+        switch (lastPlayer) {
             case HUMAN:
                 enemyField.removeListeners();
                 enemy.makeShot(null);

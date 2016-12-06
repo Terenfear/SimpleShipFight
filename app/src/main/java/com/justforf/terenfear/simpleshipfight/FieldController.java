@@ -5,11 +5,8 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
-import android.util.AttributeSet;
 import android.util.Log;
 import android.view.GestureDetector;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
@@ -18,70 +15,32 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
+
+import static com.justforf.terenfear.simpleshipfight.FieldView.DIMENSION;
 
 /**
  * Created by Terenfear on 27.09.2016.
  */
 
-public class FieldController extends android.support.constraint.ConstraintLayout {
-    public static final int DIMENSION = 10;
-    private int xOffset = 0;
-    private int tileSize;
+public class FieldController {
     private FieldModel fieldModel;
-    private Canvas canvas;
-    private ImageView fieldImageView;
-    private ArrayList<TextView> quantityTextViews;
+    private FieldView fieldView;
     private GestureDetector gestureDetector;
     private Context parentContext;
     private Drawman drawman;
     private FieldGenerator fieldGenerator;
     private TurnEndListener turnEndListener;
+    private int xOffset = 0;
+    private int tileSize = 0;
 
-    public FieldController(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        initView(context);
-    }
-
-    public FieldController(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        initView(context);
-    }
-
-    public FieldController(Context context) {
-        super(context);
-        initView(context);
-    }
-
-    public Drawman getDrawman() {
-        return drawman;
-    }
-
-    public void setTurnEndListener(TurnEndListener listener) {
-        turnEndListener = listener;
-    }
-
-    private void initView(Context context) {
+    public FieldController(Context context, FieldView field) {
+        this.fieldView = field;
         parentContext = context;
         drawman = new Drawman();
         fieldGenerator = new FieldGenerator();
-        LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        inflater.inflate(R.layout.field_layout, this);
-    }
-
-    @Override
-    protected void onFinishInflate() {
-        super.onFinishInflate();
-        TextView tvQuantityOf1 = (TextView) this.findViewById(R.id.tvShip1);
-        TextView tvQuantityOf2 = (TextView) this.findViewById(R.id.tvShip2);
-        TextView tvQuantityOf3 = (TextView) this.findViewById(R.id.tvShip3);
-        TextView tvQuantityOf4 = (TextView) this.findViewById(R.id.tvShip4);
-        quantityTextViews = new ArrayList<>();
-        quantityTextViews.add(tvQuantityOf1);
-        quantityTextViews.add(tvQuantityOf2);
-        quantityTextViews.add(tvQuantityOf3);
-        quantityTextViews.add(tvQuantityOf4);
-        fieldImageView = (ImageView) this.findViewById(R.id.ivField);
+        final ImageView fieldImageView = fieldView.getFieldImageView();
         fieldImageView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
@@ -92,22 +51,26 @@ public class FieldController extends android.support.constraint.ConstraintLayout
                 tileSize = fieldHeight / DIMENSION;
                 fieldModel = new FieldModel(tileSize, DIMENSION);
                 Bitmap bitmap = Bitmap.createBitmap(fieldHeight, fieldHeight, Bitmap.Config.ARGB_8888);
+                Canvas canvas = new Canvas(bitmap);
                 fieldImageView.setImageBitmap(bitmap);
-                canvas = new Canvas(bitmap);
-                drawman.drawVisibleField();
-                gestureDetector = new GestureDetector(parentContext, new FieldController.PrepGestureListener());
-                fieldImageView.setOnTouchListener(new fieldOnTouchListener());
+                fieldView.setCanvas(canvas);
+                drawman.drawVisibleField(fieldImageView, canvas, fieldModel.getTileMap());
             }
         });
+        gestureDetector = new GestureDetector(parentContext, new StationingGestureListener());
+        fieldImageView.setOnTouchListener(new FieldOnTouchListener());
+    }
 
+    public void setTurnEndListener(TurnEndListener listener) {
+        turnEndListener = listener;
     }
 
     public void removeListeners() {
-        fieldImageView.setOnTouchListener(null);
+        fieldView.getFieldImageView().setOnTouchListener(null);
     }
 
     public void enableShotListeners() {
-        fieldImageView.setOnTouchListener(new fieldOnTouchListener());
+        fieldView.getFieldImageView().setOnTouchListener(new FieldOnTouchListener());
         gestureDetector = new GestureDetector(parentContext, new ShotGestureListener());
     }
 
@@ -131,6 +94,7 @@ public class FieldController extends android.support.constraint.ConstraintLayout
     public void updateShipQuantity() {
         boolean[] enoughShips = checkShipQuantityStatus();
         int[] shipQuantity = fieldModel.getShipQuantity();
+        List<TextView> quantityTextViews = fieldView.getQuantityTextViews();
         for (int shipType = 0; shipType < 4; shipType++) {
             quantityTextViews.get(shipType).setText("x " + shipQuantity[shipType]);
             if (enoughShips[shipType])
@@ -141,22 +105,25 @@ public class FieldController extends android.support.constraint.ConstraintLayout
         }
     }
 
-    public Tile getTile(int rowId, int colId) throws IndexOutOfBoundsException {
-        return fieldModel.getTileMap()[rowId][colId];
+    public Tile getTile(int colId, int rowId) throws IndexOutOfBoundsException {
+        return fieldModel.getTile(colId, rowId);
     }
 
     public void clearField() {
         fieldModel.clear();
-        drawman.drawVisibleField();
+        drawman.drawVisibleField(fieldView.getFieldImageView(), fieldView.getCanvas(), fieldModel.getTileMap());
         updateShipQuantity();
     }
 
-    public void generateEnemyField() {
+    public void generateField(boolean isVisible) {
         boolean isGenerated;
         do {
             isGenerated = fieldGenerator.generateRandomField();
         } while (!isGenerated);
-        drawman.drawInvisibleField();
+        if (isVisible)
+            drawman.drawVisibleField(fieldView.getFieldImageView(), fieldView.getCanvas(), fieldModel.getTileMap());
+        else
+            drawman.drawInvisibleField(fieldView.getFieldImageView(), fieldView.getCanvas(), fieldModel.getTileMap());
     }
 
     public void shotTilesAround(int rowId, int colId) {
@@ -164,7 +131,7 @@ public class FieldController extends android.support.constraint.ConstraintLayout
             for (int colOffset = -1; colOffset < 2; colOffset++) {
                 try {
                     fieldModel.getTileMap()[rowId + rowOffset][colId + colOffset].setShot(true);
-                } catch (IndexOutOfBoundsException e) {
+                } catch (IndexOutOfBoundsException ignored) {
                 }
             }
         }
@@ -201,8 +168,8 @@ public class FieldController extends android.support.constraint.ConstraintLayout
             }
         }
         if (isEndgame) {
-            fieldImageView.setOnTouchListener(null);
-            drawman.drawVisibleField();
+            fieldView.getFieldImageView().setOnTouchListener(null);
+            drawman.drawVisibleField(fieldView.getFieldImageView(), fieldView.getCanvas(), fieldModel.getTileMap());
             AlertDialog.Builder builder = new AlertDialog.Builder(parentContext);
             builder.setMessage(message).setPositiveButton(buttonText, null);
             AlertDialog dialog = builder.create();
@@ -211,6 +178,134 @@ public class FieldController extends android.support.constraint.ConstraintLayout
         return isEndgame;
     }
 
+    public void setVisibility(int visibility) {
+        fieldView.setVisibility(visibility);
+    }
+
+    public void drawVisibleField() {
+        drawman.drawVisibleField(fieldView.getFieldImageView(), fieldView.getCanvas(), fieldModel.getTileMap());
+    }
+
+    public void drawInvisibleField() {
+        drawman.drawInvisibleField(fieldView.getFieldImageView(), fieldView.getCanvas(), fieldModel.getTileMap());
+    }
+
+    public void drawTile(Tile tile) {
+        drawman.drawTile(fieldView.getFieldImageView(), fieldView.getCanvas(), tile);
+    }
+
+    private boolean placePart(int x, int y) {
+        Tile tile = fieldModel.getTile(x, y);
+        if (!tile.isInShip()) {
+            //checking selected tile
+            ArrayList<Tile> neighborTiles = new ArrayList<>();
+            for (int rowOffset = -1; rowOffset < 2; rowOffset++) {
+                for (int colOffset = -1; colOffset < 2; colOffset++) {
+                    try {
+                        Tile neighbor = fieldModel.getTile(x + colOffset, y + rowOffset);
+                        if (neighbor.isInShip()) {
+                            //checking diagonals
+                            if (rowOffset != 0 && colOffset != 0) {
+                                Toast.makeText(parentContext, "You can't place ships diagonally", Toast.LENGTH_SHORT).show();
+                                return true;
+                            }
+                            //not diagonal neighbors will be analyzed
+                            neighborTiles.add(neighbor);
+                        }
+                    } catch (IndexOutOfBoundsException ignored) {
+                    }
+
+                }
+            }
+            switch (neighborTiles.size()) {
+                //can we unite neighbors?
+                case 2:
+                    Ship firstNeighbor = neighborTiles.get(0).getParentShip();
+                    Ship secondNeighbor = neighborTiles.get(1).getParentShip();
+                    //can we have ship with such size?
+                    if (firstNeighbor.getSize() + secondNeighbor.getSize() < 4) {
+                        firstNeighbor.addPart(tile);
+                        for (Tile part : secondNeighbor.getAllParts())
+                            firstNeighbor.addPart(part);
+                        fieldModel.removeShip(secondNeighbor);
+                        firstNeighbor.sort();
+                    } else {
+                        Toast.makeText(parentContext, "Resulting ship is too big", Toast.LENGTH_SHORT).show();
+                        return true;
+                    }
+                    break;
+                case 1:
+                    Ship neighborShip = neighborTiles.get(0).getParentShip();
+                    if (!neighborShip.addPart(tile)) {
+                        Toast.makeText(parentContext, "Resulting ship is too big", Toast.LENGTH_SHORT).show();
+                        return true;
+                    } else neighborShip.sort();
+                    break;
+                case 0:
+                    ArrayList parts = new ArrayList<Tile>();
+                    parts.add(tile);
+                    Ship ship = new Ship(parts);
+                    tile.setParentShip(ship);
+                    ship.sort();
+                    fieldModel.addShip(ship);
+                    break;
+                default:
+                    Log.i("long tap switch", "unidentified error");
+                    return true;
+            }
+            updateShipQuantity();
+            drawman.drawTile(fieldView.getFieldImageView(), fieldView.getCanvas(), tile);
+        }
+        return true;
+    }
+
+    private void removePart(int x, int y) {
+        Tile tile = fieldModel.getTile(x, y);
+        if (tile.isInShip()){
+            Ship ship = tile.getParentShip();
+            int partId = ship.getAllParts().indexOf(tile);
+            ship.removePart(tile);
+            tile.setParentShip(null);
+            if (ship.getSize() == 0) {
+                fieldModel.removeShip(ship);
+            } else {
+                if (partId != 0 && partId != ship.getSize()) {
+                    ArrayList<Tile> secondParts = new ArrayList<>();
+                    while (partId < ship.getSize()) {
+                        secondParts.add(ship.getPart(partId));
+                        ship.removePart(partId);
+                    }
+                    Ship secondShip = new Ship(secondParts);
+                    fieldModel.addShip(secondShip);
+                }
+            }
+            updateShipQuantity();
+            drawman.drawTile(fieldView.getFieldImageView(), fieldView.getCanvas(), tile);
+        }
+    }
+
+    private boolean shotTile(int x, int y){
+        Tile tile = fieldModel.getTile(x, y);
+        if (tile.isShot()) {
+            Toast.makeText(parentContext, "This tile is already have been shot", Toast.LENGTH_SHORT).show();
+            return false;
+        } else {
+            tile.setShot(true);
+            if (tile.isInShip()) {
+                if (!tile.getParentShip().checkIntegrity()) {
+                    for (Tile part : tile.getParentShip().getAllParts())
+                        shotTilesAround(part.getY(), part.getX());
+                    drawman.drawInvisibleField(fieldView.getFieldImageView(), fieldView.getCanvas(), fieldModel.getTileMap());
+                    updateShipQuantity();
+                    if (isEndgame("You have won, congratulations!", "Great!"))
+                        return true;
+                }
+            } else
+                turnEndListener.turnEnded(LastPlayer.HUMAN);
+            drawman.drawTile(fieldView.getFieldImageView(), fieldView.getCanvas(), tile);
+            return true;
+        }
+    }
 
     private final class FieldGenerator {
         private final int VERTICAL = 0;
@@ -285,7 +380,7 @@ public class FieldController extends android.support.constraint.ConstraintLayout
                 for (int colOffset = -1; colOffset < 2; colOffset++) {
                     try {
                         fieldModel.getTileMap()[rowId + rowOffset][colId + colOffset].setFarFromShips(false);
-                    } catch (IndexOutOfBoundsException e) {
+                    } catch (IndexOutOfBoundsException ignored) {
                     }
                 }
             }
@@ -324,71 +419,7 @@ public class FieldController extends android.support.constraint.ConstraintLayout
         }
     }
 
-    public final class Drawman {
-        private Paint clearing;
-        private Paint emptyPaint;
-        private Paint shipPaint;
-        private Paint shotPaint;
-        private Paint destroyedPaint;
-
-        private Drawman() {
-            clearing = new Paint(Paint.ANTI_ALIAS_FLAG);
-            clearing.setColor(Color.WHITE);
-            emptyPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-            emptyPaint.setStyle(Paint.Style.STROKE);
-            emptyPaint.setColor(Color.BLACK);
-            shipPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-            shipPaint.setColor(Color.BLUE);
-            shotPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-            shotPaint.setColor(Color.LTGRAY);
-            destroyedPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-            destroyedPaint.setColor(Color.RED);
-        }
-
-        public void drawVisibleField() {
-            canvas.drawPaint(clearing);
-            for (Tile[] row : fieldModel.getTileMap())
-                for (Tile tile : row) {
-                    if (tile.isInShip())
-                        if (tile.isShot())
-                            canvas.drawRect(tile, destroyedPaint);
-                        else canvas.drawRect(tile, shipPaint);
-                    else if (tile.isShot())
-                        canvas.drawRect(tile, shotPaint);
-                    canvas.drawRect(tile, emptyPaint);
-                }
-            fieldImageView.invalidate();
-        }
-
-        public void drawInvisibleField() {
-            canvas.drawPaint(clearing);
-            for (Tile[] row : fieldModel.getTileMap())
-                for (Tile tile : row) {
-                    if (tile.isShot()) {
-                        if (tile.isInShip())
-                            canvas.drawRect(tile, destroyedPaint);
-                        else canvas.drawRect(tile, shotPaint);
-                    }
-                    canvas.drawRect(tile, emptyPaint);
-                }
-            fieldImageView.invalidate();
-        }
-
-        public void drawTile(Tile tile) {
-            canvas.drawRect(tile, clearing);
-            if (tile.isInShip())
-                if (tile.isShot())
-                    canvas.drawRect(tile, destroyedPaint);
-                else canvas.drawRect(tile, shipPaint);
-            else if (tile.isShot())
-                canvas.drawRect(tile, shotPaint);
-            canvas.drawRect(tile, emptyPaint);
-            fieldImageView.invalidate((int) tile.left, (int) tile.top, (int) tile.right, (int) tile.bottom);
-        }
-    }
-
-
-    private class fieldOnTouchListener implements View.OnTouchListener {
+    private class FieldOnTouchListener implements View.OnTouchListener {
 
         @Override
         public boolean onTouch(View view, MotionEvent motionEvent) {
@@ -402,69 +433,18 @@ public class FieldController extends android.support.constraint.ConstraintLayout
         public boolean onDoubleTap(MotionEvent e) {
             int x = (int) ((e.getX() - xOffset) / tileSize);
             int y = (int) (e.getY() / tileSize);
-            for (int rowId = 0; rowId < DIMENSION; rowId++) {
-                for (int colId = 0; colId < DIMENSION; colId++) {
-                    Tile tile = fieldModel.getTileMap()[rowId][colId];
-                    if (x == tile.getX() && y == tile.getY()) {
-                        if (tile.isShot()) {
-                            Toast.makeText(parentContext, "This tile is already have been shot", Toast.LENGTH_SHORT).show();
-                            return false;
-                        } else {
-                            tile.setShot(true);
-                            if (tile.isInShip()) {
-                                if (!tile.getParentShip().checkIntegrity()) {
-                                    for (Tile part : tile.getParentShip().getAllParts())
-                                        shotTilesAround(part.getY(), part.getX());
-                                    drawman.drawInvisibleField();
-                                    updateShipQuantity();
-                                    if (isEndgame("You have won, congratulations!", "Great!"))
-                                        return true;
-                                }
-                            } else
-                                turnEndListener.turnEnded(LastPlayer.HUMAN);
-                            drawman.drawTile(tile);
-                            return true;
-                        }
-                    }
-                }
-            }
-            return true;
+            return shotTile(x, y);
         }
     }
 
-    private class PrepGestureListener extends GestureDetector.SimpleOnGestureListener {
+    private class StationingGestureListener extends GestureDetector.SimpleOnGestureListener {
 
         @Override
         public void onLongPress(MotionEvent e) {
             Log.i("onTouch", "long tap");
             int x = (int) ((e.getX() - xOffset) / tileSize);
             int y = (int) (e.getY() / tileSize);
-            for (Ship ship : fieldModel.getShips()) {
-                for (Tile part : ship.getAllParts()) {
-                    if (x == part.getX() && y == part.getY()) {
-                        int partId = ship.getAllParts().indexOf(part);
-                        ship.removePart(part);
-                        part.setParentShip(null);
-                        if (ship.getSize() == 0) {
-                            fieldModel.removeShip(ship);
-                        } else {
-                            if (partId != 0 && partId != ship.getSize()) {
-                                ArrayList<Tile> secondParts = new ArrayList<>();
-                                while (partId < ship.getSize()) {
-                                    secondParts.add(ship.getPart(partId));
-                                    ship.removePart(partId);
-                                }
-                                Ship secondShip = new Ship(secondParts);
-                                fieldModel.addShip(secondShip);
-                            }
-                        }
-                        updateShipQuantity();
-                        drawman.drawTile(part);
-                        return;
-                    }
-                }
-
-            }
+            removePart(x, y);
         }
 
         @Override
@@ -477,74 +457,7 @@ public class FieldController extends android.support.constraint.ConstraintLayout
             Log.i("onTouch", "single tap");
             int x = (int) ((e.getX() - xOffset) / tileSize);
             int y = (int) (e.getY() / tileSize);
-            for (int rowId = 0; rowId < DIMENSION; rowId++) {
-                Tile[] row = fieldModel.getTileMap()[rowId];
-                for (int colId = 0; colId < row.length; colId++) {
-                    Tile tile = row[colId];
-                    if (!tile.isInShip() && x == tile.getX() && y == tile.getY()) {
-                        //checking selected tile
-                        ArrayList<Tile> neighborTiles = new ArrayList<>();
-                        for (int rowOffset = -1; rowOffset < 2; rowOffset++) {
-                            for (int colOffset = -1; colOffset < 2; colOffset++) {
-                                try {
-                                    Tile neighbor = fieldModel.getTileMap()[rowId + rowOffset][colId + colOffset];
-                                    if (neighbor.isInShip()) {
-                                        //checking diagonals
-                                        if (rowOffset != 0 && colOffset != 0) {
-                                            Toast.makeText(parentContext, "You can't place ships diagonally", Toast.LENGTH_SHORT).show();
-                                            return true;
-                                        }
-                                        //not diagonal neighbors will be analyzed
-                                        neighborTiles.add(neighbor);
-                                    }
-                                } catch (IndexOutOfBoundsException exception) {
-                                }
-
-                            }
-                        }
-                        switch (neighborTiles.size()) {
-                            //can we unite neighbors?
-                            case 2:
-                                Ship firstNeighbor = neighborTiles.get(0).getParentShip();
-                                Ship secondNeighbor = neighborTiles.get(1).getParentShip();
-                                //can we have ship with such size?
-                                if (firstNeighbor.getSize() + secondNeighbor.getSize() < 4) {
-                                    firstNeighbor.addPart(tile);
-                                    for (Tile part : secondNeighbor.getAllParts())
-                                        firstNeighbor.addPart(part);
-                                    fieldModel.removeShip(secondNeighbor);
-                                    firstNeighbor.sort();
-                                } else {
-                                    Toast.makeText(parentContext, "Resulting ship is too big", Toast.LENGTH_SHORT).show();
-                                    return true;
-                                }
-                                break;
-                            case 1:
-                                Ship neighborShip = neighborTiles.get(0).getParentShip();
-                                if (!neighborShip.addPart(tile)) {
-                                    Toast.makeText(parentContext, "Resulting ship is too big", Toast.LENGTH_SHORT).show();
-                                    return true;
-                                } else neighborShip.sort();
-                                break;
-                            case 0:
-                                ArrayList parts = new ArrayList<Tile>();
-                                parts.add(tile);
-                                Ship ship = new Ship(parts);
-                                tile.setParentShip(ship);
-                                ship.sort();
-                                fieldModel.addShip(ship);
-                                break;
-                            default:
-                                Log.i("long tap switch", "unidentified error");
-                                return true;
-                        }
-                        updateShipQuantity();
-                        drawman.drawTile(tile);
-                        return true;
-                    }
-                }
-            }
-            return true;
+            return placePart(x, y);
         }
     }
 

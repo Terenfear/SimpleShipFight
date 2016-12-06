@@ -67,4 +67,7 @@ public class FieldModel {
         this.tileMap = tileMap;
     }
 
+    public Tile getTile(int colId, int rowId){
+        return tileMap[rowId][colId];
+    }
 }

@@ -1,6 +1,7 @@
 package com.justforf.terenfear.simpleshipfight;
 
 import android.graphics.RectF;
+import android.support.annotation.NonNull;
 
 /**
  * Created by Terenfear on 08.09.2016.
@@ -62,7 +63,7 @@ public class Tile extends RectF implements Comparable {
     }
 
     @Override
-    public int compareTo(Object otherTile) {
+    public int compareTo(@NonNull Object otherTile) {
         int otherX = ((Tile) otherTile).getX();
         int otherY = ((Tile) otherTile).getY();
         if (this.x != otherX)
